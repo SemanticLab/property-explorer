@@ -170,7 +170,7 @@
 							<details v-if="Object.values(p.instanceOfFacets).length > 5">
 								<summary class="is-italic">More</summary>
 							  	<ul>
-								  	<li style="" v-for="occr in Object.values(p.instanceOfFacets).sort((a,b) => b.count - a.count).slice(5)">{{occr.sub_label}} &rightarrow; {{occr.obj_label}} {{occr.percent}}% <span class="is-size-7">{{occr.count}}</span> </li>
+								  	<li style="" v-for="occr in Object.values(p.instanceOfFacets).sort((a,b) => b.count - a.count).slice(5)"><a target="_blank" :href="buildSparqlQueryLink(occr, p)">{{occr.sub_label}} &rightarrow; {{occr.obj_label}} </a> {{occr.percent}}% <span class="is-size-7">{{occr.count}}</span> </li>
 								</ul>
 							</details>
 
