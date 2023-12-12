@@ -1,0 +1,493 @@
+<html>
+	<head>
+		
+		<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
+		<style>
+/*			.facet-button{
+				margin-right:0.2em;
+				margin-bottom: 0.2em;
+			}*/
+
+			a{
+				text-decoration: none;
+				color: hsl(0, 0%, 4%) !important;
+			}
+			a:hover{
+				text-decoration: underline;
+				color: hsl(0, 0%, 4%) !important;
+			}
+			.sub-pie-chart{
+		        border-radius: 50%;
+		        border-color: black;
+		        border-width: 1px;
+		        border-style: solid;
+		        height:200px;
+		        width:200px;
+		        display: inline-block;
+        	}
+        	summary{
+        		cursor: pointer;
+        	}
+
+        	.sub-pie-values{
+        		text-align: left;
+        	}
+        	.obj-pie-values{
+        		text-align: left;
+        	}
+
+        	.sub-pie-chart-holder{
+        		text-align: right;
+        	}
+        	.obj-pie-chart-holder{
+        		text-align: left;
+        		padding-left: 0;
+        	}        	
+        	.pred-hr{
+				z-index: -100;
+				position: relative;        
+				background-color: black;
+				margin: 0.25rem 0;		
+        	}
+
+			@media (max-width:801px){
+
+	        	.sub-pie-values{
+	        		text-align: center;
+	        	}
+	        	.sub-pie-chart-holder{
+	        		text-align: center;
+	        	}
+	        	body:{
+	        		background-color: red !important;
+	        	}
+
+        	}
+
+
+		</style>
+	</head>
+
+
+
+	<body>
+		
+
+
+
+
+
+
+		<div id="app">
+
+
+
+			<div class="container">
+			  
+				<div>Date Generated: {{dataDate}}</div>
+				<details ref="details">
+				<summary class="is-italic is-size-4">Filter Properties</summary>
+
+					  <div style="text-align:right; margin-bottom: 1em;">
+					  	<button class="button is-link" @click="resetFacets()">Reset Filters</button>
+					  </div>
+
+					  <div id="facets-projects">	
+					  	<div class="is-size-5">Filter by Project: Properties used with items that belong to specific projects.</div>
+					  	<div class="buttons">		  	
+					  		<button v-for="k in projectFacets" :class="{'button':true, 'is-small':true, 'is-rounded':true, 'facet-button':true, 'is-success': (k.qid == facetLock.project)}" :disabled="(facetLock.project)" @click="buildFacets(k.qid)">{{k.label}}</button>			  	
+					  	</div>
+					  </div>
+
+					  <hr>
+
+					  <div id="facets-sub">	
+					  	<div class="is-size-5">Filter by Subject Item Type: The instance of the items used as the subject of a property.</div>
+					  	{{facetLock.sub}}
+					  	<div class="buttons">		  	
+					  		<button v-for="k in subFacetsOrder" :class="{'button':true, 'is-small':true, 'is-rounded':true, 'facet-button':true, 'is-success': (subFacets[k].qid == facetLock.sub)}" :disabled="(facetLock.sub)" @click="buildFacets(null,subFacets[k].qid)">{{subFacets[k].label}} ({{subFacets[k].count}})</button>			  	
+					  	</div>
+					  </div>
+
+					  <hr>
+
+					  <div id="facets-obj">	
+					  	<div class="is-size-5">Filter by Object Item Type: The instance of the items used as the object of a property.</div>
+
+
+					  	<div class="buttons">		  	
+					  		<button v-for="k in objFacetsOrder" :class="{'button':true, 'is-small':true, 'is-rounded':true, 'facet-button':true, 'is-success': (objFacets[k].qid == facetLock.obj)}" :disabled="(facetLock.obj)" @click="buildFacets(null,null,objFacets[k].qid)">{{objFacets[k].label}} ({{objFacets[k].count}})</button>			  	
+					  	</div>
+					  </div>
+
+
+					  <div style="text-align:right; margin-bottom: 1em;">
+					  	<button class="button is-link" @click="resetFacets()">Reset Filters</button>
+					  </div>
+
+				</details>
+
+
+					  <hr>
+
+			  <div>
+			  	
+			  	<div v-for="p in properties">
+
+
+					<h4 class="title is-4"></h4>
+					<p class="title is-3">{{p.label}}</p>
+					<p class="subtitle is-5"><a :href="p.uri" target="_blank">{{p.uri.replace('http://base.semlab.io/entity/','')}}</a> - {{p.description}} <span v-if="p.altlabel!=''">({{p.altlabel}})</span></p>
+			  		<div class="has-text-danger" v-if="p.instanceOfStatsTotal == 0">This property may be a Reference or Qualifer property, their use is not documented on this report yet.</div>
+			  		<div class="columns">
+					  <div class="column is-2 sub-pie-values">
+					  	Subject Type
+					  	<ul>
+					  		<li v-for="subStat in Object.values(p.subStats).sort((a,b) => b.count - a.count).slice(0,6)"><a v-if="subStat.qid != 'Literal'" :href="'https://base.semlab.io/entity/' + subStat.qid" target="_blank">{{subStat.label}}</a> <span v-else>{{objStat.label}}</span> {{subStat.percent}}% <span class="is-size-7">{{subStat.count}}</span></li>
+					  	</ul>
+						<details v-if="Object.values(p.subStats).length > 7">
+							<summary class="is-italic">More</summary>
+							<ul>
+								<li v-for="subStat in Object.values(p.subStats).sort((a,b) => b.count - a.count).slice(7)"><a v-if="subStat.qid != 'Literal'" :href="'https://base.semlab.io/entity/' + subStat.qid" target="_blank">{{subStat.label}}</a> <span v-else>{{objStat.label}}</span> {{subStat.percent}}% <span class="is-size-7">{{subStat.count}}</span></li>
+							</ul>
+						</details>
+
+					  </div>
+					  <div class="column is-2 sub-pie-chart-holder" style="padding-right: 0;">
+					  	<div class="sub-pie-chart" :style="'background:' + p.subStatsGradient +';'"></div>
+					  </div>
+					  <div class="column is-4" style="padding-left: 0; padding-right: 0;">
+						  <div style="min-height: 75px; text-align: center; padding-top: 50px;">
+						  	Used {{p.instanceOfStatsTotal}} times
+						  </div>
+					  	<hr class="pred-hr">
+						  <div style="text-align: center;">
+
+						  	<ul>
+							  	<li style="" v-for="occr in Object.values(p.instanceOfFacets).sort((a,b) => b.count - a.count).slice(0,4)"><a target="_blank" :href="buildSparqlQueryLink(occr, p)">{{occr.sub_label}} &rightarrow; {{occr.obj_label}} </a> {{occr.percent}}% <span class="is-size-7">{{occr.count}}</span> </li>
+							</ul>
+
+							<details v-if="Object.values(p.instanceOfFacets).length > 5">
+								<summary class="is-italic">More</summary>
+							  	<ul>
+								  	<li style="" v-for="occr in Object.values(p.instanceOfFacets).sort((a,b) => b.count - a.count).slice(5)">{{occr.sub_label}} &rightarrow; {{occr.obj_label}} {{occr.percent}}% <span class="is-size-7">{{occr.count}}</span> </li>
+								</ul>
+							</details>
+
+
+						  </div>
+					  </div>
+
+					  <div class="column is-2 obj-pie-chart-holder">
+
+					  	<div class="sub-pie-chart" :style="'background:' + p.objStatsGradient +';'"></div>
+
+					  </div>
+					  <div class="column is-2 obj-pie-values">
+					  	Object Type
+					  	<ul>
+					  		<li v-for="objStat in Object.values(p.objStats).sort((a,b) => b.count - a.count).slice(0,6)"><a v-if="objStat.qid != 'Literal'" :href="'https://base.semlab.io/entity/' + objStat.qid" target="_blank">{{objStat.label}}</a> <span v-else>{{objStat.label}}</span> {{objStat.percent}}% <span class="is-size-7">{{objStat.count}}</span></li>
+					  	</ul>
+						<details v-if="Object.values(p.objStats).length > 7">
+							<summary class="is-italic">More</summary>
+							<ul>
+								<li v-for="objStat in Object.values(p.objStats).sort((a,b) => b.count - a.count).slice(7)"><a v-if="objStat.qid != 'Literal'" :href="'https://base.semlab.io/entity/' + objStat.qid" target="_blank">{{objStat.label}}</a> <span v-else>{{objStat.label}}</span> {{objStat.percent}}% <span class="is-size-7">{{objStat.count}}</span></li>
+							</ul>
+						</details>
+
+
+
+					  </div>
+					</div>
+
+
+
+			  		<hr>
+
+
+			  	</div>
+
+
+			  </div>
+
+
+
+
+
+
+			</div>
+
+
+
+
+
+		</div>
+
+		<script type="module">
+		  import { createApp } from 'https://unpkg.com/vue@3/dist/vue.esm-browser.js'
+		  
+
+		  createApp({
+		    data() {
+		      return {
+		        properties: null,
+		        colorMap:null,
+		        subFacets: [],
+		        objFacets: [],
+		        projectFacets: [],
+		        subFacetsOrder: [],
+		        objFacetsOrder: [],
+		        dataDate: null,
+
+		        facetLock:{
+		        	project:false,
+		        	sub:false,
+		        	obj:false,
+		        }
+		      }
+		    },
+		    async mounted(){
+
+		    	let r = await fetch('./data/properties.json')
+		    	window.properties_json = await r.json()
+		    	this.properties = Object.assign({},window.properties_json.properties)
+		    	this.colorMap = Object.assign({},window.properties_json.qids_colors)
+		    	this.dataDate = window.properties_json.date
+		    	this.buildFacets()
+
+		    	let queryString = window.location.search;
+		    	let urlParams = new URLSearchParams(queryString);
+		    	let project = urlParams.get('project')
+		    	let obj = urlParams.get('obj')
+		    	let sub = urlParams.get('sub')
+
+
+		    	if (project || obj || sub){
+		    		if (project){
+		    			this.facetLock.project=project
+		    		}
+		    		if (obj){
+		    			this.facetLock.obj=obj
+		    		}
+		    		if (sub){
+		    			this.facetLock.sub=sub
+		    		}		
+		    		this.$refs.details.open=true
+
+		    	}
+
+		    	
+
+
+		    	// this.buildFacets('Q18807')
+		    },
+		    methods:{
+
+		    	buildSparqlQueryLink(occurance,property){
+		    		console.log(property)
+		    		if (occurance.obj_qid == 'Literal'){
+			    		let sparql = `SELECT ?subject ?subjectLabel ?object 
+							WHERE 
+							{
+							  ?subject wdt:${property.uri.split('/')[4]} ?object.
+							    ?subject wdt:P1 wd:${occurance.sub_qid}.
+
+							  SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],en". } # Helps get the label in your language, if not, then en language
+							}`
+
+						return ("https://query.semlab.io/#" + encodeURIComponent(sparql))
+
+
+		    		}else{
+			    		let sparql = `SELECT ?subject ?subjectLabel ?object ?objectLabel 
+							WHERE 
+							{
+							  ?subject wdt:${property.uri.split('/')[4]} ?object.
+							    ?subject wdt:P1 wd:${occurance.sub_qid}.
+							    ?object wdt:P1 wd:${occurance.obj_qid} .
+							  SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],en". } # Helps get the label in your language, if not, then en language
+							}`
+
+						return ("https://query.semlab.io/#" + encodeURIComponent(sparql))
+
+
+		    		}
+
+
+
+		    	},
+
+
+		    	resetFacets(){
+		    		this.properties = Object.assign({},window.properties_json.properties)
+		    		this.facetLock.project = null
+		    		this.facetLock.obj = null
+		    		this.facetLock.sub = null
+		    		history.replaceState(null, "", "/");
+
+		    	},
+
+		    	buildFacets(projectFilter,subFilter,objFilter){
+
+
+		    		// let alwaysRemove = ["P1","P11","P50","P51","P204","P205"]
+
+
+		    		// do project first
+		    		if (projectFilter){
+		    			this.facetLock.project = projectFilter
+
+			    		let toRemove = []
+		    			for (let k in this.properties){
+		    				if (this.properties[k].projects.filter((x)=>{return (x.qid == projectFilter) ? true : false;}).length==0){
+		    					toRemove.push(k)
+		    				}
+		    			}
+
+			    		for (let k of toRemove){
+			    			delete this.properties[k]
+			    		}
+		    		}
+		    		if (subFilter){
+		    			this.facetLock.sub = subFilter	
+
+			    		let toRemove = []
+		    			for (let k in this.properties){
+		    				if (Object.keys(this.properties[k].subStats).filter((x)=>{return (x == subFilter) ? true : false;}).length==0){
+		    					toRemove.push(k)
+		    				}
+		    			}
+			    		for (let k of toRemove){
+			    			delete this.properties[k]
+			    		}
+		    		}
+		    		if (objFilter){
+		    			this.facetLock.obj = objFilter	
+
+			    		let toRemove = []
+		    			for (let k in this.properties){
+		    				if (Object.keys(this.properties[k].objStats).filter((x)=>{return (x == objFilter) ? true : false;}).length==0){
+		    					toRemove.push(k)
+		    				}
+		    			}
+			    		for (let k of toRemove){
+			    			delete this.properties[k]
+			    		}
+		    		}
+
+
+		    		// for (let k of alwaysRemove){
+		    		// 	if (this.properties[k]){
+		    		// 		delete this.properties[k]
+		    		// 	}
+		    		// }
+
+
+
+
+		    		// build the facets
+		    		let projects = {}
+		    		let subs = {}	
+		    		let objs = {}	
+		    		let subFacetsLabels = []
+		    		let subFacetsLabelsMap = {}
+		    		let objFacetsLabels = []
+		    		let objFacetsLabelsMap = {}
+
+	    			for (let k in this.properties){
+	    				for (let p of this.properties[k].projects){
+
+	    					if (!projects[p.qid]){
+	    						projects[p.qid] = p
+	    					}
+	    				}
+	    				
+
+	    				for (let p in this.properties[k].instanceOfFacets){
+	    					p = this.properties[k].instanceOfFacets[p]
+
+	    					if (!subs[p.sub_qid]){
+	    						subs[p.sub_qid] = {qid: p.sub_qid, count:p.count, label: p.sub_label, color: window.properties_json.qids_colors[p.sub_qid] }
+	    						subFacetsLabels.push(p.sub_label)
+	    						subFacetsLabelsMap[p.sub_label] = p.sub_qid
+	    					}else{
+	    						subs[p.sub_qid].count = subs[p.sub_qid].count + p.count
+	    					}
+
+	    					if (!objs[p.obj_qid]){
+	    						objs[p.obj_qid] = {qid: p.obj_qid, count:p.count, label: p.obj_label, color: window.properties_json.qids_colors[p.obj_qid] }
+	    						objFacetsLabels.push(p.obj_label)
+	    						objFacetsLabelsMap[p.obj_label] = p.obj_qid
+	    					}else{
+	    						objs[p.obj_qid].count = objs[p.obj_qid].count + p.count
+	    					}
+
+
+
+
+	    				}
+
+
+	    			}
+	    			
+
+
+	    			this.subFacetsOrder = []
+	    			for (let slabel of subFacetsLabels.sort((a, b) => a.localeCompare(b, undefined, {sensitivity: 'base'}))){	    				
+	    				this.subFacetsOrder.push(subFacetsLabelsMap[slabel])
+	    			}
+
+	    			this.objFacetsOrder = []
+	    			for (let olabel of objFacetsLabels.sort((a, b) => a.localeCompare(b, undefined, {sensitivity: 'base'}))){	    				
+	    				this.objFacetsOrder.push(objFacetsLabelsMap[olabel])
+	    			}
+	    			
+
+	    			this.projectFacets = projects
+	    			this.subFacets = subs
+	    			this.objFacets = objs
+
+
+
+
+	    			let params = []
+					if (this.facetLock.project){
+						params.push(`project=${this.facetLock.project}`)
+					}
+					if (this.facetLock.sub){						
+						params.push(`sub=${this.facetLock.sub}`)
+					}
+					if (this.facetLock.obj){
+						params.push(`obj=${this.facetLock.obj}`)
+					}
+					let url = '?' + params.join("&")
+					if (params.length>0){
+						console.log('url',url)
+						history.replaceState(null, "", url);
+					}
+
+
+
+
+		    	}
+
+
+
+		    }
+
+		  }).mount('#app')
+		</script>
+
+
+
+
+
+
+
+	</body>
+
+
+
+
+
+</html>
