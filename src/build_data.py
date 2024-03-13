@@ -9,6 +9,8 @@ def chunks(lst, n):
     for i in range(0, len(lst), n):
         yield lst[i:i + n]
 
+SPARQL_ENDPOINT = 'https://query.semlab.io/proxy/wdqs/bigdata/namespace/wdq/sparql'
+SPARQL_ENDPOINT = 'http://basetest.semlab.io:8834/proxy/wdqs/bigdata/namespace/wdq/sparql'
 
 labelLookup = {}
 
@@ -38,7 +40,7 @@ params = {
     'query' : sparql
 }
 response = requests.get(
-    'https://query.semlab.io/proxy/wdqs/bigdata/namespace/wdq/sparql',
+    SPARQL_ENDPOINT,
     params=params,
     headers=headers,
 )
@@ -69,7 +71,7 @@ params = {
 	'query' : sparql
 }
 response = requests.get(
-    'https://query.semlab.io/proxy/wdqs/bigdata/namespace/wdq/sparql',
+    SPARQL_ENDPOINT,
     params=params,
     headers=headers,
 )
@@ -86,7 +88,13 @@ for result in data['results']['bindings']:
 
     properties[pid]['uri'] = result['property']['value']
     properties[pid]['label'] = result['propertyLabel']['value']
-    properties[pid]['alias'] = result['exportAlias']['value']
+    if 'exportAlias' in result:
+        properties[pid]['alias'] = result['exportAlias']['value']
+        print(properties[pid]['alias'])
+    else:
+        print("no alias ", pid)
+        properties[pid]['alias'] = pid
+
     if 'propertyDescription' in result:
         properties[pid]['description'] = result['propertyDescription']['value']
     
@@ -109,6 +117,8 @@ for c in chunks(pids,20):
 
 counter = 0
 for p in properties:
+
+
     counter = counter + 1
     print(counter,'/',len(properties), f"({p})")
     if properties[p]['type'] == 'wikibase-item':
@@ -156,11 +166,11 @@ for p in properties:
         'query' : sparql
     }
     response = requests.get(
-        'https://query.semlab.io/proxy/wdqs/bigdata/namespace/wdq/sparql',
+        SPARQL_ENDPOINT,
         params=params,
         headers=headers,
     )
-    print(sparql)
+
     data = response.json()
     properties[p]['instanceOfStats'] = {} 
     properties[p]['projectsQids'] = {'all':[],'sub':[],'obj':[]}
@@ -209,7 +219,7 @@ for p in properties:
             'query' : sparql
         }
         sub_response = requests.get(
-            'https://query.semlab.io/proxy/wdqs/bigdata/namespace/wdq/sparql',
+            SPARQL_ENDPOINT,
             params=params,
             headers=headers,
         )
@@ -319,6 +329,7 @@ for p in properties:
 global_qid_count = {}
 
 for p in properties:
+
     for qid in properties[p]['objStats']:
         if qid not in global_qid_count:
             global_qid_count[qid] = 0
