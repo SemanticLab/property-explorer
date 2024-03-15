@@ -10,7 +10,6 @@ def chunks(lst, n):
         yield lst[i:i + n]
 
 SPARQL_ENDPOINT = 'https://query.semlab.io/proxy/wdqs/bigdata/namespace/wdq/sparql'
-SPARQL_ENDPOINT = 'http://basetest.semlab.io:8834/proxy/wdqs/bigdata/namespace/wdq/sparql'
 
 labelLookup = {}
 
