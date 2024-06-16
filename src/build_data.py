@@ -44,9 +44,11 @@ response = requests.get(
     headers=headers,
 )
 data = response.json()
-for result in data['results']['bindings']:
-    labelLookup[result['item']['value'].split('/')[-1]] = result['itemLabel']['value']
 
+for result in data['results']['bindings']:
+    print(result)
+    labelLookup[result['item']['value'].split('/')[-1]] = result['itemLabel']['value']
+    print(result['item']['value'].split('/')[-1])
 
 
 
@@ -105,6 +107,15 @@ for result in data['results']['bindings']:
 
     pids.append(pid)
 
+# sort the pids numericly
+num_pids = []
+for p in pids:
+    num_pids.append(int(p[1:]))
+pids = []
+for num in sorted(num_pids):
+    pids.append(f'P{num}')
+
+
 # ask for the data types for each property
 for c in chunks(pids,20):
     ps = "|".join(c)
@@ -114,8 +125,9 @@ for c in chunks(pids,20):
         properties[p]['type'] = data['entities'][p]['datatype']
 
 
+
 counter = 0
-for p in properties:
+for p in pids:
 
 
     counter = counter + 1
@@ -156,7 +168,7 @@ for p in properties:
             GROUP BY ?instanceOfSub ?instanceOfObj
 
         """
-
+    print(sparql)
 
     headers = {
         'Accept': 'application/sparql-results+json',
@@ -248,10 +260,16 @@ for p in properties:
                 project_qid = project_uri.split("/")[-1]
 
                 if project_qid not in properties[p]['projectsQids']['all']:
+                    if project_qid not in labelLookup:
+                        print("No label found for project",project_qid)
+                        continue
                     properties[p]['projectsQids']['all'].append(project_qid)
                     properties[p]['projects'].append({'qid':project_qid,'label':labelLookup[project_qid]})
 
                 if project_qid not in properties[p]['projectsQids']['sub']:
+                    if project_qid not in labelLookup:
+                        print("No label found for project",project_qid)
+                        continue                    
                     properties[p]['projectsQids']['sub'].append(project_qid)
                     properties[p]['projectsSub'].append({'qid':project_qid,'label':labelLookup[project_qid]})
 
