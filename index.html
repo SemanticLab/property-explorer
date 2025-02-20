@@ -132,7 +132,7 @@
 
 			  <div>
 			  	
-			  	<div v-for="p in properties">
+			  	<div v-for="p in sortProperties(properties)">
 
 
 					<h4 class="title is-4"></h4>
@@ -251,6 +251,7 @@
 		    	let r = await fetch('./data/properties.json')
 		    	window.properties_json = await r.json()
 		    	this.properties = Object.assign({},window.properties_json.properties)
+		    	console.log("this.properties",this.properties)
 		    	this.colorMap = Object.assign({},window.properties_json.qids_colors)
 		    	this.dataDate = window.properties_json.date
 		    	this.buildFacets()
@@ -283,8 +284,28 @@
 		    },
 		    methods:{
 
+		    	sortProperties(properties){
+
+		    		if (properties){
+
+			    		let justNumbers = Object.keys(properties).map((v) => { return parseInt(v.replace("P",'')) }).sort(function (a, b) {  return a - b;  });
+			    		let keys = justNumbers.map((v) => { return `P${v}`})
+			    		let newP = []
+			    		for (let k of keys){
+			    			newP.push(properties[k])
+			    		}
+
+
+			    		return newP
+
+		    		}
+
+		    		return properties
+
+		    	},
+
 		    	buildSparqlQueryLink(occurance,property){
-		    		console.log(property)
+
 		    		if (occurance.obj_qid == 'Literal'){
 			    		let sparql = `SELECT ?subject ?subjectLabel ?object 
 							WHERE 
