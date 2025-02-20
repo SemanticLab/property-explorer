@@ -417,7 +417,7 @@ for p in properties:
 
     current_precent = 0;
     gradient_entries = []
-    grays = ['#E5E4E2','#D3D3D3','#C0C0C0','#A9A9A9','#899499','#B2BEB5']
+    grays = ['#E5E4E2','#D3D3D3','#C0C0C0','#A9A9A9','#899499','#B2BEB5', '#848884', '#71797E', '#818589', '#708090']
     for fg in first_group:
         gradient_color = "white"
 
@@ -456,7 +456,7 @@ for p in properties:
 
     current_precent = 0;
     gradient_entries = []
-    grays = ['#E5E4E2','#D3D3D3','#C0C0C0','#A9A9A9','#899499','#B2BEB5']
+    grays = ['#E5E4E2','#D3D3D3','#C0C0C0','#A9A9A9','#899499','#B2BEB5', '#848884', '#71797E', '#818589', '#708090']
     for fg in first_group:
         gradient_color = "white"
         current_precent = current_precent + fg[1]['percent']
