@@ -34,6 +34,7 @@ sparql = """
 """
 headers = {
     'Accept': 'application/sparql-results+json',
+    'User-Agent': 'semlab-data-process',
 }
 params = {
     'query' : sparql
@@ -67,6 +68,7 @@ LIMIT 5000
 """
 headers = {
     'Accept': 'application/sparql-results+json',
+    'User-Agent': 'semlab-data-process',
 }
 params = {
 	'query' : sparql
@@ -119,7 +121,7 @@ for num in sorted(num_pids):
 # ask for the data types for each property
 for c in chunks(pids,20):
     ps = "|".join(c)
-    response = requests.get(f"https://base.semlab.io/w/api.php?action=wbgetentities&ids={ps}&format=json")
+    response = requests.get(f"https://base.semlab.io/w/api.php?action=wbgetentities&ids={ps}&format=json", headers={'User-Agent': 'semlab-data-process'})
     data = response.json()
     for p in data['entities']:
         properties[p]['type'] = data['entities'][p]['datatype']
@@ -172,6 +174,7 @@ for p in pids:
 
     headers = {
         'Accept': 'application/sparql-results+json',
+        'User-Agent': 'semlab-data-process',
     }
     params = {
         'query' : sparql
